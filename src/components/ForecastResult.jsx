@@ -1,4 +1,5 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, memo } from "react";
+import ForecastingList from "./ForecastingList";
 import styled from "styled-components";
 
 const ForecastTable = styled.div`
@@ -7,10 +8,12 @@ const ForecastTable = styled.div`
   flex-direction: column;
 `;
 
-export default function ForecastResult({ coordsToCheck }) {
-  const [data, setData] = useState(null);
+const ForecastResult = memo(function ForecastResult({ coordsToCheck }) {
+  const [datas, setDatas] = useState(null);
+  const [location, setLocation] = useState("");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [isResult, setIsResult] = useState(false);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -20,7 +23,8 @@ export default function ForecastResult({ coordsToCheck }) {
           `https://api.openweathermap.org/data/2.5/forecast?lat=${coordsToCheck.lat}&lon=${coordsToCheck.lon}&appid=c21a75b667d6f7abb81f118dcf8d4611`,
         );
         const result = await response.json();
-        setData(result);
+        setDatas(result.list);
+        setLocation(result.city);
       } catch (error) {
         setError(error.message);
       } finally {
@@ -28,16 +32,24 @@ export default function ForecastResult({ coordsToCheck }) {
       }
     };
     // Si location existe
-    if (coordsToCheck) {
+    if (coordsToCheck.lat !== "" && coordsToCheck.lon !== "") {
       fetchData();
+      setIsResult(true);
     }
   }, [coordsToCheck]);
 
-  console.log(data);
+  if (isResult !== true) {
+    return <p>no data</p>;
+  }
 
   return (
     <ForecastTable>
-      <div>Weather</div>
+      <div>
+        <p>ville:{location.name}</p>
+      </div>
+      <ForecastingList forecastDatas={datas} />
     </ForecastTable>
   );
-}
+});
+
+export default ForecastResult;
